@@ -1,77 +1,39 @@
 <?php
+Yii::import('ext.editCK.BaseEditCK');
 
-class EditCK extends CInputWidget {
+class EditCK extends BaseEditCK {
 
-/*
-* properties from  CInputWidget
- *
- */
-/* @var string name
- * @var string value
- * @var CModel model
- * @var string attribute
- * @var string[] HtmlOptions
- */
-/*
- * own properties
- */
-    // upload path from the root of the website. Must be writable for all
-    public $uploadPath = '/upload';
-
-    //path to folder where KCfinder folder lies (from the root of the website)
-    // don't put it in protected folder!
-    public $vendorsPath = '/vendors';
-
-    // user's config values for CKEditor. See http://docs.ckeditor.com/#!/api/CKEDITOR.config
-    public $config = array();
-
-
-    public function init() {
-
-        // integration with KCFinder
-
-        $baseDir = Yii::app()->baseUrl.$this->vendorsPath;
-
-        $this->config['filebrowserBrowseUrl'] = $baseDir.'/kcfinder/browse.php?opener=ckeditor&type=files';
-        $this->config['filebrowserImageBrowseUrl'] = $baseDir.'/kcfinder/browse.php?opener=ckeditor&type=images';
-        $this->config['filebrowserFlashBrowseUrl'] = $baseDir.'/kcfinder/browse.php?opener=ckeditor&type=flash';
-        $this->config['filebrowserUploadUrl'] = $baseDir.'/kcfinder/browse.php?opener=ckeditor&type=files';
-        $this->config['filebrowserImageUploadUrl'] = $baseDir.'/kcfinder/browse.php?opener=ckeditor&type=images';
-        $this->config['filebrowserFlashUploadUrl'] = $baseDir.'/kcfinder/browse.php?opener=ckeditor&type=flash';
-
-        $_SESSION['KCFINDER'] = array(
-            'disabled' => false,
-            'uploadURL' => Yii::app()->baseUrl.$this->uploadPath,
-            'uploadDir' => realpath(Yii::app()->basePath . '/..'.$this->uploadPath),
-        );
-    }
-
+    // inline mode, false by default (replace)
+    public $inline = false;
 
     public function run() {
 
-        // publish assets
-        $excludeFiles = Yii::app() -> assetManager -> excludeFiles;
-        array_push($excludeFiles,'LICENSE.md','README.md','CHANGES.md','samples');
-        Yii::app() -> assetManager -> excludeFiles = $excludeFiles;
+        parent::run();
 
-        $baseDir = dirname(__FILE__);
-        $assets = CHtml::asset($baseDir.DIRECTORY_SEPARATOR.'ckeditor');
+        // register css for inline text area (not include in skin)
+        if ($this->inline) {
+             Yii::app() -> clientScript -> registerCss('CKinlineStyle',
+              '.cke_textarea_inline
+		            {
+		            	padding: 10px;
+		            	height: 200px;
+		            	overflow: auto;
+            			border: 1px solid gray;
+            			-webkit-appearance: textfield;
+            		}'
+        );
+    }
 
-        // register js script file
-        Yii::app() -> clientScript -> registerScriptFile($assets.'/ckeditor.js');
+        $mode = $this->inline ? 'inline' : 'replace';
 
-        // config array as js object
-        $config = CJavaScript::encode($this->config);
-
-        // take name and id from widget
-        list($name, $id) = $this->resolveNameID();
-        $this->htmlOptions['id'] = $id;
+        $id = $this -> htmlOptions['id'];
+        $name = $this->nameId[0];
 
         // register script to replace textarea with ckeditor
         Yii::app() -> clientScript ->
              registerScript('Yii.'.get_class($this).'#'.$id,
-            "CKEDITOR.replace('{$name}',{$config});",
-             CClientScript::POS_LOAD);
+            'CKEDITOR.'.$mode."('{$name}',{$this->jsconfig});",
+             CClientScript::POS_END);
 
         // make textarea from model or simple form
         if($this->hasModel()) {
