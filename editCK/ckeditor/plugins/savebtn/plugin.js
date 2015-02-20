@@ -29,9 +29,8 @@ CKEDITOR.plugins.add( 'savebtn', {
                     data: {text: data, id: editor.name, page: page} //editor.name contains the id of the current editable html tag
                 })
                 .done(function(response) {
-                    console.log("success");
+                    console.log("Succesfully updated");
                    // alert('id: '+editor.name+' \nurl: '+page+' \ntext: '+data);
-                    alert('Succesfully updated');
 
                 })
                 .fail(function() {

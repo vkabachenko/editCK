@@ -3,7 +3,7 @@ Yii::import('ext.editCK.BaseEditCK');
 
 class EditCK extends BaseEditCK {
 
-    // inline mode, false by default (replace)
+    // inline mode, false by default (i.e. replace)
     public $inline = false;
 
     public function run() {
