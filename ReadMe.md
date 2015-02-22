@@ -1,60 +1,91 @@
-Current versions: 
-	CKEditor - 4.4.6  http://download.cksource.com/CKEditor/CKEditor/CKEditor%204.4.6/ckeditor_4.4.6_full.zip
-	KCFinder - 3.12 https://github.com/sunhater/kcfinder/releases/tag/3.12
+#Html-editor extension for Yii 1
 
-put KCFinder folder in WebRoot/vendors or any other folder created at WebRoot except protected.
-Create upload folder in WebRoot. Make it writable.
+##Overview
+This extension allows the use of CKEditor in forms and on the fly. You can upload images while editing html.
 
+##Requirements
+* This extension was created using Yii 1.1.15. 
+* It uses CKEditor 4.4.6 for html editing
+* It uses KCFinder 3.12 for uploading images inside editor 
 
-CKEditor in the form's textarea fields (extension EditCK)
+##Main features
+* WYSIWYG editor for the textarea with or without the model
+* Hide editor toolbar when textarea is not in focus
+* Editing html on the fly without a form 
+* Upload images and flashes while editing
+* Filter disallowed html tags 
+* Customize editor toolbar
+* Extra plugins to enhance editor functions
 
-Options:
+##Installation
+* Copy the **editCK** folder into **WebRoot/protected/extension** folder
+* Download KCFinder from [here](https://github.com/sunhater/kcfinder/releases/tag/3.12)
+* Unzip **kcfinder** folder into **WebRoot/vendors** folder
+* Create **upload** folder in **WebRoot**. Make it writable.
 
-uploadPath  - Path to upload folder from the WebRoot. Default: '/upload'
-vendorsPath - Path to folder with KCFinder from the WebRoot. Default: '/vendors'
-inline - CKEditor toolbar is always visible (inline: false) or only when the editable field has focus (inline: false). Default:false.
-config - array with config options of CKEditor. Options list: http://docs.ckeditor.com/#!/api/CKEDITOR.config
+Last three installation steps are optional if you want to include the upload images feature.
 
-example:
+##Usage
+###Textarea without model
+	$this->widget('ext.editCK.EditCK',
+            array('name'=>'editfield',
+                  'value'=>'<h2>Test</h2>',
+                 ));  
+###Textarea with model
+	$this->widget('ext.editCK.EditCK',
+            array('model'=>$model,
+		'attribute'=>'content',
+                 ));
+###Textarea which hide editor's tooltip when it's not at focus
+	$this->widget('ext.editCK.EditCK',
+            array('model'=>$model,
+		'attribute'=>'content',
+		'inline'=>true,
+                 ));
+###Edit Html on the fly
+	$this->beginWidget('ext.editCK.InlineCK',
+            array('url'=>$this->createUrl('save',array('id'=>$data->id)),
+                	'config'=>array('allowedContent'=>true,),
+                 ));
+            echo $data->content;
+	$this->endWidget();
 
-$this->widget('ext.editCK.EditCK',
-            array('model'=>$model,'attribute'=>'body',
-                'inline'=>true,));
+In that case in the editor's toolbar the Save button appears. Pressing this button leads to Ajax call the action by url option. Changed html data are in the `$_POST['text']`. So the action to save data looks like
 
-***************************************
+	public function actionSave($id) {
+		$model = $this->loadModel($id);
+		$model->content = $_POST['text'];
+		$model->save();
+	}
 
-CKEditor to edit and save text blocks on the fly (extension InlineCK).
+This feature uses `savebtn` plugin described [here](http://stackoverflow.com/questions/18956257/how-to-add-an-ajax-save-button-with-loading-gif-to-ckeditor-4-2-1-working-samp)
+###Editor configuration
+Use the `config` option. This is array with options described in [CKEditor documentation](http://docs.ckeditor.com/#!/api/CKEDITOR.config).
 
-We need to add extra-plugin savebtn to CKEditor. It places the save button in CKEditor's toolbar and make Ajax request that saves data when user press the button.
-Plugin origin: http://stackoverflow.com/questions/18956257/how-to-add-an-ajax-save-button-with-loading-gif-to-ckeditor-4-2-1-working-samp
+Examples.
 
-Options:
+Set editor's height 400px:
 
-url - url controller that saves data (data to save are in $_POST['text']).
+	$this->widget('ext.editCK.EditCK',
+            array('model'=>$model,
+		'attribute'=>'content',
+		'config'=>array('height'=>'400',),
+                 ));
+Allow all html tags in the editor:
 
-example:
+	$this->widget('ext.editCK.EditCK',
+            array('model'=>$model,
+		'attribute'=>'content',
+		'config'=>array('allowedContent'=>true,),
+                 ));
+###Customizing toolbar
+You can customize toolbar items by editing the `config.js` file in **ckeditor** folder. This file is empty by default that means the full toolbar. If you will edit toolbar items don't remove the `custom` section that contains the Save button for inline mode.
+###Extra plugins
+As an example the extension contains the `abbr` plugin that can create abbreviations by selecting certain part of text, edit and delete abbreviations. You can add plugin to editor by configuring the widget:
 
-in the view:
-
-    $this->beginWidget('ext.editCK.InlineCK',
-            array('url'=>$this->createUrl('save',array('id'=>$data->id))));
-
-        echo $data->content;
-
-    $this->endWidget();
-
-in the controller:
-
-    public function actionSave($id) {
-
-        $model = $this->loadModel($id);
-        $model->content = $_POST['text'];
-        $model->save();
-
-    }
-
-
-See options for EditCK (except inline).
-
-
-
+	$this->widget('ext.editCK.EditCK',
+            array('model'=>$model,
+		'attribute'=>'content',
+		'config'=>array('extraPlugins'=>'abbr',),
+                 ));
+Please see the plugin basics in the [CKEditor documentation](http://docs.ckeditor.com/#!/guide/plugin_sdk_intro)
